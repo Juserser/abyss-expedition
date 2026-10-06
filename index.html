@@ -1,0 +1,145 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<meta name="theme-color" content="#0b0a0f">
+<title>심연 원정대</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>⚔️</text></svg>">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<canvas id="screen"></canvas>
+
+<!-- 타이틀 / 계정 / 로비 (DOM: 한글 입력) -->
+<div id="front" class="overlay">
+  <div class="front-inner">
+    <div class="logo">
+      <div class="logo-mark">⚔️</div>
+      <h1>심연 원정대</h1>
+      <p class="tag">잿더미가 된 왕국, 마지막 용병단</p>
+    </div>
+
+    <div id="pane-acct" class="pane">
+      <p class="label">닉네임</p>
+      <input id="acct-name" maxlength="8" placeholder="닉네임 (2~8자)" autocomplete="off">
+      <p class="label">비밀코드 <small>(6자리, 이 닉네임을 지키는 열쇠)</small></p>
+      <input id="acct-code" maxlength="6" placeholder="000000" class="code-input" inputmode="numeric" autocomplete="off">
+      <button class="btn big red" id="btn-login">입장</button>
+      <p class="status" id="acct-status"></p>
+      <div class="row small">
+        <button class="btn ghost" id="btn-backup">💾 백업 코드</button>
+        <button class="btn ghost" id="btn-restore">📂 백업 복원</button>
+        <button class="btn ghost" id="btn-help">❓ 조작법</button>
+      </div>
+      <p class="hint" id="acct-list"></p>
+    </div>
+
+    <div id="pane-main" class="pane hidden">
+      <p class="who"><span id="me-name"></span> <small id="me-sub"></small></p>
+      <div class="row">
+        <button class="btn big red" id="btn-host">🏰 방 만들기</button>
+        <button class="btn big blue" id="btn-join">🔑 방 참가</button>
+      </div>
+      <p class="label">길드 <small>(방장의 길드로 모입니다)</small></p>
+      <div id="guild-pick" class="guild-pick"></div>
+      <div class="row small">
+        <button class="btn ghost" id="btn-logout">← 다른 닉네임</button>
+      </div>
+    </div>
+
+    <div id="pane-join" class="pane hidden">
+      <p class="label">방 코드</p>
+      <input id="join-code" maxlength="4" placeholder="ABCD" class="code-input" autocomplete="off">
+      <button class="btn big red" id="btn-join-go">들어가기</button>
+      <p class="status" id="join-status"></p>
+      <button class="btn ghost" id="btn-join-back">← 돌아가기</button>
+    </div>
+
+    <div id="pane-lobby" class="pane hidden">
+      <div class="lobby-head">
+        <div>방 코드 <span class="code" id="lobby-code">····</span> <button class="btn tiny ghost" id="btn-copy">복사</button></div>
+        <div class="status" id="lobby-status"></div>
+      </div>
+      <div id="lobby-roster" class="roster"></div>
+      <p class="label">직업 선택</p>
+      <div id="class-pick" class="class-pick"></div>
+      <div id="class-desc" class="class-desc"></div>
+      <p class="warn" id="role-warn"></p>
+      <div class="row">
+        <button class="btn big red" id="btn-ready">준비</button>
+        <button class="btn ghost" id="btn-leave">나가기</button>
+      </div>
+      <p class="hint">2~3명, 3명 권장. 방장이 '출발'을 누르면 길드 홀로 들어갑니다. 음성은 디스코드를 켜세요.</p>
+    </div>
+
+    <div id="pane-help" class="pane hidden">
+      <table class="keys">
+        <tr><td>이동</td><td>W A S D</td></tr>
+        <tr><td>조준</td><td>마우스</td></tr>
+        <tr><td>기본 공격</td><td>좌클릭 (누르고 있으면 연속 · 궁수는 차지)</td></tr>
+        <tr><td>스킬</td><td>Q · E</td></tr>
+        <tr><td>궁극기</td><td>R (사기 100 필요)</td></tr>
+        <tr><td>구르기</td><td>Space / Shift</td></tr>
+        <tr><td>상호작용 · 부활</td><td>F</td></tr>
+        <tr><td>물약</td><td>1</td></tr>
+        <tr><td>핑 / 이모트</td><td>Tab (누르고 방향) / G</td></tr>
+        <tr><td>채팅 · 지도</td><td>Enter · M</td></tr>
+      </table>
+      <button class="btn ghost" id="btn-help-back">← 돌아가기</button>
+    </div>
+  </div>
+</div>
+
+<!-- 게임 중 DOM 오버레이 (투표/카드/상점/이벤트/결과/길드 홀 메뉴) -->
+<div id="ov" class="hidden"></div>
+<div id="chat" class="hidden"><div id="chat-log"></div><input id="chat-in" maxlength="60" placeholder="채팅 (Enter)"></div>
+<div id="toasts"></div>
+
+<div id="notice" class="overlay hidden">
+  <div class="notice-box"><p id="notice-text"></p><div id="notice-btns"></div></div>
+</div>
+
+<button id="gear" title="설정">⚙️</button>
+<div id="settings" class="hidden">
+  <h3>설정 <small>(이 기기에만)</small></h3>
+  <label>전체 소리 <input type="range" id="set-master" min="0" max="100"></label>
+  <label>배경음악 <input type="range" id="set-music" min="0" max="100"></label>
+  <label>효과음 <input type="range" id="set-sfx" min="0" max="100"></label>
+  <label>화면 흔들림 <input type="range" id="set-shake" min="0" max="100"></label>
+  <label class="chk"><input type="checkbox" id="set-dmg"> 피해 숫자 표시</label>
+  <label class="chk"><input type="checkbox" id="set-aim"> 자동 조준 보정</label>
+  <button class="btn ghost" id="set-close">닫기</button>
+</div>
+
+<script src="lib/peerjs.min.js"></script>
+<script src="src/config.js"></script>
+<script src="src/core/util.js"></script>
+<script src="src/core/audio.js"></script>
+<script src="src/core/input.js"></script>
+<script src="src/net/net.js"></script>
+<script src="src/account/acct.js"></script>
+<script src="src/data/classes.js"></script>
+<script src="src/data/enemies.js"></script>
+<script src="src/data/relics.js"></script>
+<script src="src/data/cards.js"></script>
+<script src="src/data/events.js"></script>
+<script src="src/data/items.js"></script>
+<script src="src/data/meta.js"></script>
+<script src="src/gfx/sprites.js"></script>
+<script src="src/gfx/render.js"></script>
+<script src="src/world/world.js"></script>
+<script src="src/sim/status.js"></script>
+<script src="src/sim/sim.js"></script>
+<script src="src/sim/skills.js"></script>
+<script src="src/sim/enemyai.js"></script>
+<script src="src/sim/bosses.js"></script>
+<script src="src/run/run.js"></script>
+<script src="src/run/results.js"></script>
+<script src="src/hall/hall.js"></script>
+<script src="src/ui/ui.js"></script>
+<script src="src/ui/hud.js"></script>
+<script src="src/ui/overlays.js"></script>
+<script src="src/main.js"></script>
+</body>
+</html>
