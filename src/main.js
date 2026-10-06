@@ -440,11 +440,11 @@ G.App = (function () {
       if (v.mode === 'hall') { const sim = App.mode === 'host' ? currentSim() : null; v.hintObj = ''; const near = v.ents.find(e => e.k === 'o' && e.hl && (e.t === 'station' || e.t === 'npc')); if (near) v.hintObj = `F — ${near.nm}`; }
       v.mapForMini = map;
       R.drawWorld(v, map, dt, App.mySlot);
-      R.uiBegin();
+      R.layout();
       HUD.draw(R.wctx, v, App.mySlot, dt);
       if (v.ov && v.ov.type === 'bossIntro') { x.fillStyle = 'rgba(0,0,0,0.55)'; x.fillRect(0, C.H / 2 - 30, C.W, 60); R.text(x, v.ov.name, C.W / 2, C.H / 2 - 8, '#ffd0d0', 16, 'center', true); R.text(x, v.ov.sub, C.W / 2, C.H / 2 + 10, '#d9d2c5', 8, 'center', true); }
     } else {
-      x.setTransform(1, 0, 0, 1, 0, 0);
+      R.layout();
       if (v.map && v.phase !== 'results') HUD.drawNodeMap(x, v, App.mySlot);
       else { x.fillStyle = '#0b0a0f'; x.fillRect(0, 0, C.W, C.H); }
       HUD.draw(x, Object.assign({}, v, { ents: [] }), App.mySlot, dt);

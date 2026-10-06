@@ -15,21 +15,24 @@ G.R = (function () {
   R.init = function () {
     screen = document.getElementById('screen');
     sctx = screen.getContext('2d');
-    wc = document.createElement('canvas'); wc.width = C.W; wc.height = C.H; wctx = wc.getContext('2d');
-    lc = document.createElement('canvas'); lc.width = C.W / 2; lc.height = C.H / 2; lctx = lc.getContext('2d');
+    wc = document.createElement('canvas'); wctx = wc.getContext('2d');
+    lc = document.createElement('canvas'); lctx = lc.getContext('2d');
     R.sctx = sctx; R.wctx = wctx; R.wc = wc; R.screen = screen;
     window.addEventListener('resize', R.resize);
     R.resize();
   };
+  // 레이아웃 단위는 C.W×C.H(512×288). 내부 렌더는 Z배(화면 크기에 맞춰 2~4) 로 그려 글자·스프라이트가 선명하게.
+  R.Z = 2;
   R.resize = function () {
     const dpr = Math.min(window.devicePixelRatio || 1, 2);
     R.dpr = dpr;
     const cw = Math.floor(window.innerWidth * dpr), ch = Math.floor(window.innerHeight * dpr);
     screen.width = cw; screen.height = ch;
-    let s = Math.min(cw / C.W, ch / C.H);
-    const si = Math.floor(s);
-    if (si >= 2 && si / s > 0.86) s = si;
+    const s = Math.min(cw / C.W, ch / C.H);
     R.scale = s;
+    const Z = Math.max(2, Math.min(4, Math.round(s)));
+    if (Z !== R.Z || wc.width !== C.W * Z) { R.Z = Z; wc.width = C.W * Z; wc.height = C.H * Z; lc.width = Math.round(C.W * Z / 2); lc.height = Math.round(C.H * Z / 2); mapVer = -1; }
+    wctx.imageSmoothingEnabled = false;
     R.ox = Math.floor((cw - C.W * s) / 2);
     R.oy = Math.floor((ch - C.H * s) / 2);
   };
@@ -37,10 +40,12 @@ G.R = (function () {
   R.toWorld = (lx, ly) => [lx + R.cam.left, ly + R.cam.top];
   R.toScreen = (wx, wy) => [wx - R.cam.left, wy - R.cam.top];
   R.uiBegin = function () { sctx.setTransform(R.scale, 0, 0, R.scale, R.ox, R.oy); sctx.imageSmoothingEnabled = false; };
+  // 월드 캔버스에 레이아웃 단위로 그리기 (HUD, 노드 맵)
+  R.layout = function () { wctx.setTransform(R.Z, 0, 0, R.Z, 0, 0); wctx.imageSmoothingEnabled = false; };
   R.present = function () {
     sctx.setTransform(1, 0, 0, 1, 0, 0);
     sctx.fillStyle = '#000'; sctx.fillRect(0, 0, screen.width, screen.height);
-    sctx.imageSmoothingEnabled = false;
+    sctx.imageSmoothingEnabled = Math.abs(R.scale / R.Z - 1) > 0.02;
     sctx.drawImage(wc, R.ox, R.oy, C.W * R.scale, C.H * R.scale);
   };
 
@@ -150,11 +155,13 @@ G.R = (function () {
     R.time += dt;
     updateFx(dt);
     const x = wctx, T = C.TILE;
+    const Z = R.Z;
     x.setTransform(1, 0, 0, 1, 0, 0);
-    x.fillStyle = '#050408'; x.fillRect(0, 0, C.W, C.H);
+    x.fillStyle = '#050408'; x.fillRect(0, 0, C.W * Z, C.H * Z);
     if (!map) return;
     R.bakeMap(map);
-    x.setTransform(1, 0, 0, 1, -R.cam.left, -R.cam.top);
+    x.setTransform(Z, 0, 0, Z, -R.cam.left * Z, -R.cam.top * Z);
+    x.imageSmoothingEnabled = false;
     x.drawImage(mapC, 0, 0);
     const ents = view.ents || [];
     R.lights.length = 0;
@@ -376,7 +383,7 @@ G.R = (function () {
     l.clearRect(0, 0, lc.width, lc.height);
     l.fillStyle = `rgba(4,2,8,${amb})`; l.fillRect(0, 0, lc.width, lc.height);
     l.globalCompositeOperation = 'destination-out';
-    const sc = 0.5;
+    const Z = R.Z, sc = Z / 2;
     for (const li of R.lights) {
       const lx = (li.x - R.cam.left) * sc, ly = (li.y - R.cam.top) * sc, r = li.r * sc;
       if (lx < -r || ly < -r || lx > lc.width + r || ly > lc.height + r) continue;
@@ -387,19 +394,18 @@ G.R = (function () {
     l.globalCompositeOperation = 'source-over';
     x.setTransform(1, 0, 0, 1, 0, 0);
     x.imageSmoothingEnabled = true;
-    x.drawImage(lc, 0, 0, C.W, C.H);
+    x.drawImage(lc, 0, 0, C.W * Z, C.H * Z);
     x.imageSmoothingEnabled = false;
-    // 색 조명 (가산)
+    // 색 조명 (가산) — 월드 좌표
+    x.setTransform(Z, 0, 0, Z, -R.cam.left * Z, -R.cam.top * Z);
     x.globalCompositeOperation = 'lighter';
     for (const li of R.lights) {
       if (!li.c || li.c === '#ffe8c0') continue;
-      const lx = li.x - R.cam.left, ly = li.y - R.cam.top;
-      const g = x.createRadialGradient(lx, ly, 0, lx, ly, li.r);
+      const g = x.createRadialGradient(li.x, li.y, 0, li.x, li.y, li.r);
       g.addColorStop(0, hexA(li.c, 0.12 * li.a)); g.addColorStop(1, 'rgba(0,0,0,0)');
-      x.fillStyle = g; x.beginPath(); x.arc(lx, ly, li.r, 0, Math.PI * 2); x.fill();
+      x.fillStyle = g; x.beginPath(); x.arc(li.x, li.y, li.r, 0, Math.PI * 2); x.fill();
     }
     x.globalCompositeOperation = 'source-over';
-    x.setTransform(1, 0, 0, 1, -R.cam.left, -R.cam.top);
   }
   function hexA(h, a) { const n = parseInt(h.slice(1), 16); return `rgba(${(n >> 16) & 255},${(n >> 8) & 255},${n & 255},${a})`; }
   R.hexA = hexA;
