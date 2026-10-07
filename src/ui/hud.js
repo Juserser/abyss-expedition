@@ -36,7 +36,7 @@ G.HUD = (function () {
     // 내 스킬 바 (하단 중앙)
     const me = pl[mySlot];
     const inWorld = view.mode === 'hall' || view.phase === 'combat';
-    if (me && !me.gh && inWorld) {
+    if (me && !me.gh && inWorld && !view.touchUI) {
       const cls = G.CLASSES[me.c];
       const items = [['Q', cls.q.name, me.q, me.qc], ['E', cls.e.name, me.e, me.ec], ['R', cls.r.name, me.mo >= 100 ? 0 : 1, 1], ['⇧', '구르기', me.roll, C.ROLL_CD]];
       const bx = C.W / 2 - 92, by = C.H - 30;
@@ -98,6 +98,15 @@ G.HUD = (function () {
       const dx = G.In.mouse.x - wh.x, dy = G.In.mouse.y - wh.y; const sel = Math.hypot(dx, dy) < 12 ? -1 : Math.floor((((Math.atan2(dy, dx) + Math.PI * 2 + Math.PI / 8) % (Math.PI * 2)) / (Math.PI * 2)) * 8);
       list.forEach((s, i) => { const a = i / 8 * Math.PI * 2; R.text(x, s, wh.x + Math.cos(a) * 30, wh.y + Math.sin(a) * 30, sel === i ? '#ffd36b' : '#d9d2c5', sel === i ? 9 : 7, 'center', true); });
       R.text(x, wh.kind === 'ping' ? '핑' : '이모트', wh.x, wh.y, '#a89f8c', 6, 'center', true);
+    }
+    // 터치 스틱 표시
+    if (G.In.touch.on) {
+      const ts = G.In.touchState();
+      for (const [o, v, col] of [[ts.mo, ts.move, '#d9d2c5'], [ts.ao, ts.aim, '#ff6b5a']]) {
+        if (!o) continue;
+        x.strokeStyle = col; x.lineWidth = 1; x.globalAlpha = 0.5; x.beginPath(); x.arc(o.ox, o.oy, 28, 0, Math.PI * 2); x.stroke();
+        x.fillStyle = col; x.globalAlpha = 0.7; x.beginPath(); x.arc(o.ox + (v ? v.x * v.l * 28 : 0), o.oy + (v ? v.y * v.l * 28 : 0), 9, 0, Math.PI * 2); x.fill(); x.globalAlpha = 1;
+      }
     }
     // 미니맵
     if (H.minimap && view.mapForMini) H.drawMinimap(x, view);

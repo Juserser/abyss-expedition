@@ -123,6 +123,20 @@ input:focus { border-color: #b8462e; }
 .notice-box p { margin: 0 0 12px; font-size: 15px; line-height: 1.5; }
 #notice-btns { display: flex; gap: 8px; justify-content: center; }
 
+/* 터치 조작 */
+#screen, body { touch-action: none; -webkit-user-select: none; }
+#touch { position: fixed; inset: 0; z-index: 17; pointer-events: none; }
+#touch .tgroup { position: absolute; bottom: 14px; display: flex; gap: 10px; pointer-events: none; }
+#touch .tgroup.left { left: 14px; flex-direction: row; }
+#touch .tgroup.right { right: 14px; flex-direction: row; align-items: flex-end; }
+#touch .tb { pointer-events: auto; width: 58px; height: 58px; border-radius: 50%; border: 2px solid rgba(224,176,80,0.7); background: rgba(14,12,20,0.6); color: #e8dcc0; font-size: 20px; font-weight: bold; font-family: inherit; touch-action: none; }
+#touch .tb.small { width: 44px; height: 44px; font-size: 15px; white-space: nowrap; padding: 0; }
+body.touch #chat { bottom: 76px; width: 42vw; }
+body.touch #chat-log { max-height: 70px; font-size: 12px; }
+#touch .tb.ult { width: 68px; height: 68px; border-color: #ffd36b; background: rgba(106,31,26,0.7); }
+#touch .tb.on { background: rgba(224,176,80,0.5); transform: scale(0.94); }
+@media (pointer: coarse) { #chat { width: 44vw; bottom: 84px; } #chat-log { max-height: 80px; font-size: 12px; } .panel { max-height: 86vh; font-size: 13px; } #gear { top: 6px; right: 6px; } }
+
 #gear { position: fixed; top: 10px; right: 10px; z-index: 30; background: rgba(0,0,0,.4); border: 1px solid #3a3328; color: #a89f8c; font-size: 16px; width: 34px; height: 34px; cursor: pointer; }
 #settings { position: fixed; top: 50px; right: 10px; z-index: 30; background: #121018; border: 1px solid #5a4a2a; padding: 12px 16px; display: flex; flex-direction: column; gap: 8px; width: 240px; }
 #settings h3 { margin: 0; font-size: 15px; } #settings small { color: #6f675a; font-weight: normal; }

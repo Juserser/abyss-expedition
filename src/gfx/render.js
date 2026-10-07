@@ -28,6 +28,10 @@ G.R = (function () {
     R.dpr = dpr;
     const cw = Math.floor(window.innerWidth * dpr), ch = Math.floor(window.innerHeight * dpr);
     screen.width = cw; screen.height = ch;
+    // 폰(터치 UI, 낮은 화면)은 레이아웃 높이를 줄여 글자·캐릭터를 크게. 가로로 긴 화면은 폭을 늘려 검은 띠 없이 채움
+    const touchUI = document.body && document.body.classList && document.body.classList.contains('touch');
+    C.H = touchUI && ch / dpr < 560 ? 224 : 288;
+    C.W = Math.round(Math.max(C.H * 16 / 9, Math.min(C.H * 2.5, C.H * cw / Math.max(1, ch))));
     const s = Math.min(cw / C.W, ch / C.H);
     R.scale = s;
     const Z = Math.max(2, Math.min(4, Math.round(s)));
@@ -231,7 +235,7 @@ G.R = (function () {
   function sprite(key, dir, frame) { const s = G.SPR.get(key); return dir < 0 ? s.l[frame] : s.r[frame]; }
   function drawSprite(x, key, px, py, dir, moving, scale, alpha, flash) {
     const s = G.SPR.get(key); const sc = (scale || 1) * (s.big || 1);
-    const frame = moving ? (Math.floor(R.time * 8) % 2) : 0;
+    const frame = moving ? (Math.abs(Math.floor(R.time * 8)) % 2) : 0;
     const img = flash ? (dir < 0 ? s.wl : s.wr) : sprite(key, dir, frame);
     const w = s.w * sc, h = s.h * sc;
     if (alpha != null) x.globalAlpha = alpha;

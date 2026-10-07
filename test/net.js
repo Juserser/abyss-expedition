@@ -14,7 +14,7 @@ function makeCtx(name) {
   const store = {}, elCache = {};
   const localStorage = { getItem: k => (k in store ? store[k] : null), setItem: (k, v) => { store[k] = String(v); }, removeItem: k => { delete store[k]; } };
   const ctx = { addEventListener: noop, removeEventListener: noop, innerWidth: 1280, innerHeight: 720, devicePixelRatio: 1, AudioContext: null, location: { search: '', href: 'http://x/' },
-    document: { getElementById: id => elCache[id] || (elCache[id] = el('div')), createElement: el, addEventListener: noop, body: el('body'), activeElement: null, hidden: false },
+    document: { getElementById: id => elCache[id] || (elCache[id] = el('div')), createElement: el, addEventListener: noop, body: el('body'), activeElement: null, hidden: false, querySelectorAll: () => [], documentElement: el('html') },
     localStorage, navigator: { getGamepads: () => [], clipboard: null }, performance: { now: () => NOW }, setInterval: () => 0, clearInterval: noop, setTimeout: (f) => 0, clearTimeout: noop, console,
     Peer: function () { return { on: noop, connect: () => ({ on: noop }), destroy: noop }; }, btoa: s => Buffer.from(s, 'binary').toString('base64'), atob: s => Buffer.from(s, 'base64').toString('binary'), escape: s => s, unescape: s => s, URL: { createObjectURL: () => '', revokeObjectURL: noop }, Blob: function () {},
     Uint8Array, Uint8ClampedArray, Map, Set, Math, JSON, Object, Array, Number, String, Date, Error, Promise, Proxy, Reflect, Symbol, Infinity, NaN, isNaN, parseInt, parseFloat, encodeURIComponent, decodeURIComponent };

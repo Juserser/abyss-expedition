@@ -57,7 +57,7 @@ G.App = (function () {
 
   // ───── 초기화 / 프론트
   App.init = function () {
-    A.loadSettings(); R.init(); G.SPR.init(); UI.bindSettings(); G.In.attach(R.screen);
+    A.loadSettings(); R.init(); G.SPR.init(); UI.bindSettings(); G.In.attach(R.screen); G.In.attachTouch(R.screen);
     $('acct-name').value = G.settings.lastName || ''; $('acct-code').value = G.settings.lastCode || '';
     const accts = A.listAccounts(); if (accts.length) $('acct-list').textContent = '이 기기의 계정: ' + accts.join(', ');
     $('btn-login').onclick = login; $('acct-code').addEventListener('keydown', e => { if (e.key === 'Enter') login(); });
@@ -144,7 +144,7 @@ G.App = (function () {
     Net.join(code);
   }
   function metaAll(acct) { const o = {}; for (const c of G.CLASS_ORDER) o[c] = H.metaOf(acct, c); return o; }
-  function leaveRoom() { Net.close(); App.mode = 'front'; App.scene = null; App.roster = []; UI.hide(); UI.showChat(false); OV.menu = null; G.A.stopMusic(); G.In.enabled = false; pane('main'); renderGuildPick(); }
+  function leaveRoom() { Net.close(); App.mode = 'front'; App.scene = null; App.roster = []; UI.hide(); UI.showChat(false); OV.menu = null; G.A.stopMusic(); G.In.enabled = false; $('touch').classList.add('hidden'); pane('main'); renderGuildPick(); }
 
   // ───── 로비
   function renderLobby() {
@@ -267,7 +267,7 @@ G.App = (function () {
     G.A.music('hall');
     chatSys(`길드 「${App.guild.name}」 홀에 들어왔다. 술집에서 원정을 준비하라. (F 상호작용 · Enter 채팅 · Tab 핑 · G 이모트 · M 지도)`);
   }
-  function enterGame() { $('front').classList.add('hidden'); G.In.enabled = true; UI.showChat(true); R.clearFx(); lastT = performance.now(); }
+  function enterGame() { $('front').classList.add('hidden'); G.In.enabled = true; UI.showChat(true); R.clearFx(); lastT = performance.now(); if (G.In.isTouch() || /touch=1/.test(location.search)) { $('touch').classList.remove('hidden'); document.body.classList.add('touch'); R.resize(); try { if (document.documentElement.requestFullscreen) document.documentElement.requestFullscreen().catch(() => {}); if (screen.orientation && screen.orientation.lock) screen.orientation.lock('landscape').catch(() => {}); } catch (e) {} } }
   App.toHall = function () {
     if (App.mode !== 'host') return;
     App.players = [null, null, null];
@@ -356,11 +356,14 @@ G.App = (function () {
   function frame(now) {
     requestAnimationFrame(frame);
     if (!lastT) lastT = now;
-    let dt = Math.min(0.1, (now - lastT) / 1000); lastT = now;
+    let dt = Math.max(0, Math.min(0.1, (now - lastT) / 1000)); lastT = now;
     if (App.mode === 'front') return;
+    try { frameBody(dt); } catch (e) { if (!App.lastErr || now - App.lastErr > 2000) { App.lastErr = now; console.error('frame error', e.stack || e, 'time=' + R.time, 'dt=' + dt, 'Z=' + R.Z, 'scale=' + R.scale); } }
+  }
+  function frameBody(dt) {
     // 조준
     const myEnt = findMyEnt();
-    if (myEnt) { const sx = myEnt.x - R.cam.left, sy = myEnt.y - 6 - R.cam.top; G.In.aim = Math.atan2(G.In.mouse.y - sy, G.In.mouse.x - sx); }
+    if (myEnt && !G.In.touch.on) { const sx = myEnt.x - R.cam.left, sy = myEnt.y - 6 - R.cam.top; G.In.aim = Math.atan2(G.In.mouse.y - sy, G.In.mouse.x - sx); }
     if (App.mode === 'host') {
       acc += dt; let steps = 0;
       while (acc >= C.TICK && steps < 4) { hostStep(C.TICK); acc -= C.TICK; steps++; }
@@ -433,6 +436,17 @@ G.App = (function () {
     const map = currentMap();
     const x = R.wctx;
     const worldPhase = v.mode === 'hall' || v.phase === 'combat';
+    // 터치 버튼: 쿨타임·사기 표시
+    if (!$('touch').classList.contains('hidden')) {
+      v.touchUI = true;
+      const me = v.pl && v.pl[App.mySlot];
+      if (me && (tick % 6 === 0 || App.mode === 'guest')) {
+        const set = (k, s) => { const b = App.tbtn && App.tbtn[k]; if (b && b.textContent !== s) b.textContent = s; };
+        if (!App.tbtn) { App.tbtn = {}; document.querySelectorAll('#touch [data-b]').forEach(b => (App.tbtn[b.dataset.b] = b)); }
+        set('q', me.q > 0 ? me.q.toFixed(1) : 'Q'); set('e', me.e > 0 ? me.e.toFixed(1) : 'E'); set('r', me.mo >= 100 ? 'R!' : me.mo + '%'); set('roll', me.roll > 0 ? me.roll.toFixed(1) : '⇧'); set('potion', '🧪' + me.pot);
+        set('f', me.gh ? '응원' : 'F');
+      }
+    }
     if (worldPhase && map) {
       const me = findMyEnt();
       const tx = me ? me.x : map.w * 8, ty = me ? me.y : map.h * 8;
