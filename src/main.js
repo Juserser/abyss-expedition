@@ -71,8 +71,6 @@ G.App = (function () {
     $('btn-ready').onclick = () => { const me = App.roster.find(r => r.slot === App.mySlot); if (!me) return; if (App.mode === 'host') { if (App.roster.every(r => r.slot === 0 || r.ready)) startGame(); else UI.toast('모두 준비해야 출발'); } else { me.ready = !me.ready; Net.toHost({ t: 'ready', v: me.ready }); renderLobby(); } };
     $('btn-leave').onclick = () => leaveRoom();
     UI.onAct = onAct; UI.onChat = onChat;
-    G.In.cb.chat = () => { if (App.mode !== 'front') UI.openChat(); };
-    G.In.cb.chatKey = code => UI.chatKey(code);
     G.In.cb.map = () => { HUD.minimap = !HUD.minimap; };
     G.In.cb.esc = () => { if (OV.menu) OV.close(); else if ($('settings').classList.contains('hidden')) $('settings').classList.remove('hidden'); else $('settings').classList.add('hidden'); };
     G.In.cb.wheel = onWheel;
@@ -265,7 +263,7 @@ G.App = (function () {
     enterGame();
     App.scene = { type: 'hall', hall: H.create({ guild: App.guild, players: App.players }) };
     G.A.music('hall');
-    chatSys(`길드 「${App.guild.name}」 홀에 들어왔다. 술집에서 원정을 준비하라. (F 상호작용 · Enter 채팅 · Tab 핑 · G 이모트 · M 지도)`);
+    chatSys(`길드 「${App.guild.name}」 홀 — 🍺 술집 앞에서 F`);
   }
   // 화면 꺼짐 방지 (Wake Lock)
   App.wake = async function () { try { if (navigator.wakeLock && App.mode !== 'front' && !document.hidden) { App.wakeLock = await navigator.wakeLock.request('screen'); } } catch (e) {} };

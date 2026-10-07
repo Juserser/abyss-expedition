@@ -45,11 +45,11 @@ G.UI = (function () {
     (btns || [{ t: '확인' }]).forEach(b => { const el = document.createElement('button'); el.className = 'btn ' + (b.cls || 'red'); el.textContent = b.t; el.onclick = () => { $('notice').classList.add('hidden'); b.fn && b.fn(); }; box.appendChild(el); });
     $('notice').classList.remove('hidden');
   };
-  UI.chatAdd = function (s, sys) { const log = $('chat-log'); const d = document.createElement('div'); if (sys) d.className = 'sys'; d.innerHTML = s; log.appendChild(d); while (log.children.length > 60) log.firstChild.remove(); log.scrollTop = log.scrollHeight; $('chat').classList.remove('hidden'); };
-  UI.openChat = function () { $('chat').classList.remove('hidden'); $('chat').classList.add('open'); const i = $('chat-in'); i.focus(); };
-  UI.chatKey = function (code) { const i = $('chat-in'); if (code === 'Enter') { const v = i.value.trim(); i.value = ''; i.blur(); if (v) UI.onChat && UI.onChat(v); } else { i.value = ''; i.blur(); } $('chat').classList.remove('open'); };
-  document.getElementById('chat-in').addEventListener('blur', () => setTimeout(() => $('chat').classList.remove('open'), 150));
-  UI.showChat = v => $('chat').classList.toggle('hidden', !v);
+  // 채팅 없음: 시스템 알림은 토스트로 (최대 4개, 자동 소멸)
+  UI.chatAdd = function (s, sys) { const box = $('toasts'); const kids = Array.from(box.children); for (let i = 0; i + 3 < kids.length; i++) kids[i].remove(); const t = document.createElement('div'); t.className = 'toast' + (sys ? ' sys' : ''); t.innerHTML = s; box.appendChild(t); setTimeout(() => t.remove(), 4000); };
+  UI.openChat = function () {};
+  UI.chatKey = function () {};
+  UI.showChat = function () {};
 
   // 설정
   UI.bindSettings = function () {

@@ -38,7 +38,6 @@ G.In = (function () {
     if (BIND.ping.includes(e.code)) { I.wheel = { kind: 'ping', x: I.mouse.x, y: I.mouse.y }; }
     if (BIND.emote.includes(e.code)) { I.wheel = { kind: 'emote', x: I.mouse.x, y: I.mouse.y }; }
     if (BIND.map.includes(e.code)) I.cb.map && I.cb.map();
-    if (BIND.chat.includes(e.code)) I.cb.chat && I.cb.chat();
     if (BIND.esc.includes(e.code)) I.cb.esc && I.cb.esc();
   });
   window.addEventListener('keyup', e => {
