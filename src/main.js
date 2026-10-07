@@ -76,7 +76,7 @@ G.App = (function () {
     G.In.cb.map = () => { HUD.minimap = !HUD.minimap; };
     G.In.cb.esc = () => { if (OV.menu) OV.close(); else if ($('settings').classList.contains('hidden')) $('settings').classList.remove('hidden'); else $('settings').classList.add('hidden'); };
     G.In.cb.wheel = onWheel;
-    document.addEventListener('visibilitychange', () => { if (document.hidden && App.mode === 'host') { if (!App.bgTimer) App.bgTimer = setInterval(() => frame(performance.now()), 1000 / 30); } else if (App.bgTimer) { clearInterval(App.bgTimer); App.bgTimer = null; } });
+    document.addEventListener('visibilitychange', () => { if (!document.hidden) App.wake(); if (document.hidden && App.mode === 'host') { if (!App.bgTimer) App.bgTimer = setInterval(() => frame(performance.now()), 1000 / 30); } else if (App.bgTimer) { clearInterval(App.bgTimer); App.bgTimer = null; } });
     const m = location.search.match(/join=([A-Z0-9]{4})/i); if (m) G.settings.lastCode2 = m[1].toUpperCase();
     pane('acct');
     requestAnimationFrame(frame);
@@ -144,7 +144,7 @@ G.App = (function () {
     Net.join(code);
   }
   function metaAll(acct) { const o = {}; for (const c of G.CLASS_ORDER) o[c] = H.metaOf(acct, c); return o; }
-  function leaveRoom() { Net.close(); App.mode = 'front'; App.scene = null; App.roster = []; UI.hide(); UI.showChat(false); OV.menu = null; G.A.stopMusic(); G.In.enabled = false; $('touch').classList.add('hidden'); pane('main'); renderGuildPick(); }
+  function leaveRoom() { Net.close(); App.unwake(); App.mode = 'front'; App.scene = null; App.roster = []; UI.hide(); UI.showChat(false); OV.menu = null; G.A.stopMusic(); G.In.enabled = false; $('touch').classList.add('hidden'); pane('main'); renderGuildPick(); }
 
   // ───── 로비
   function renderLobby() {
@@ -267,7 +267,10 @@ G.App = (function () {
     G.A.music('hall');
     chatSys(`길드 「${App.guild.name}」 홀에 들어왔다. 술집에서 원정을 준비하라. (F 상호작용 · Enter 채팅 · Tab 핑 · G 이모트 · M 지도)`);
   }
-  function enterGame() { $('front').classList.add('hidden'); G.In.enabled = true; UI.showChat(true); R.clearFx(); lastT = performance.now(); if (G.In.isTouch() || /touch=1/.test(location.search)) { $('touch').classList.remove('hidden'); document.body.classList.add('touch'); R.resize(); try { if (document.documentElement.requestFullscreen) document.documentElement.requestFullscreen().catch(() => {}); if (screen.orientation && screen.orientation.lock) screen.orientation.lock('landscape').catch(() => {}); } catch (e) {} } }
+  // 화면 꺼짐 방지 (Wake Lock)
+  App.wake = async function () { try { if (navigator.wakeLock && App.mode !== 'front' && !document.hidden) { App.wakeLock = await navigator.wakeLock.request('screen'); } } catch (e) {} };
+  App.unwake = function () { try { if (App.wakeLock) { App.wakeLock.release(); App.wakeLock = null; } } catch (e) {} };
+  function enterGame() { $('front').classList.add('hidden'); G.In.enabled = true; UI.showChat(true); R.clearFx(); lastT = performance.now(); App.wake(); if (G.In.isTouch() || /touch=1/.test(location.search)) { $('touch').classList.remove('hidden'); document.body.classList.add('touch'); R.resize(); try { if (document.documentElement.requestFullscreen) document.documentElement.requestFullscreen().catch(() => {}); if (screen.orientation && screen.orientation.lock) screen.orientation.lock('landscape').catch(() => {}); } catch (e) {} } }
   App.toHall = function () {
     if (App.mode !== 'host') return;
     App.players = [null, null, null];

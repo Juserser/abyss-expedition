@@ -110,8 +110,8 @@ input:focus { border-color: #b8462e; }
 .panel .close { float: right; }
 .panel .row.small .btn { flex: 0; }
 
-#chat { position: fixed; left: 12px; bottom: 12px; width: 300px; z-index: 16; }
-#chat-log { max-height: 140px; overflow-y: auto; font-size: 13px; background: rgba(0,0,0,.55); padding: 6px 8px; }
+#chat { position: fixed; left: 12px; bottom: 12px; width: 250px; z-index: 16; }
+#chat-log { max-height: 96px; overflow-y: auto; font-size: 12px; background: rgba(0,0,0,.45); padding: 4px 8px; }
 #chat-log div { margin: 1px 0; text-shadow: 0 0 3px #000; }
 #chat-log .sys { color: #a89f8c; font-style: italic; }
 #chat-in { width: 100%; font-size: 13px; padding: 6px 8px; }
@@ -131,8 +131,14 @@ input:focus { border-color: #b8462e; }
 #touch .tgroup.right { right: 14px; flex-direction: row; align-items: flex-end; }
 #touch .tb { pointer-events: auto; width: 58px; height: 58px; border-radius: 50%; border: 2px solid rgba(224,176,80,0.7); background: rgba(14,12,20,0.6); color: #e8dcc0; font-size: 20px; font-weight: bold; font-family: inherit; touch-action: none; }
 #touch .tb.small { width: 44px; height: 44px; font-size: 15px; white-space: nowrap; padding: 0; }
-body.touch #chat { bottom: 76px; width: 42vw; }
-body.touch #chat-log { max-height: 70px; font-size: 12px; }
+/* 폰: 채팅은 오른쪽 위 작은 로그 3줄, 💬 버튼을 눌렀을 때만 입력창 */
+body.touch #chat { left: auto; bottom: auto; right: 8px; top: 34px; width: 30vw; min-width: 170px; }
+body.touch #chat-log { max-height: 46px; font-size: 10px; padding: 2px 6px; background: rgba(0,0,0,.35); }
+body.touch #chat-log div { margin: 0; line-height: 1.4; }
+body.touch #chat-log::-webkit-scrollbar { display: none; }
+body.touch #chat-in { display: none; font-size: 12px; padding: 4px 6px; }
+body.touch #chat.open #chat-in { display: block; }
+body.touch #chat.open #chat-log { max-height: 110px; background: rgba(0,0,0,.7); }
 #touch .tb.ult { width: 68px; height: 68px; border-color: #ffd36b; background: rgba(106,31,26,0.7); }
 #touch .tb.on { background: rgba(224,176,80,0.5); transform: scale(0.94); }
 @media (pointer: coarse) { #chat { width: 44vw; bottom: 84px; } #chat-log { max-height: 80px; font-size: 12px; } .panel { max-height: 86vh; font-size: 13px; } #gear { top: 6px; right: 6px; } }

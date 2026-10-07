@@ -46,8 +46,9 @@ G.UI = (function () {
     $('notice').classList.remove('hidden');
   };
   UI.chatAdd = function (s, sys) { const log = $('chat-log'); const d = document.createElement('div'); if (sys) d.className = 'sys'; d.innerHTML = s; log.appendChild(d); while (log.children.length > 60) log.firstChild.remove(); log.scrollTop = log.scrollHeight; $('chat').classList.remove('hidden'); };
-  UI.openChat = function () { $('chat').classList.remove('hidden'); const i = $('chat-in'); i.focus(); };
-  UI.chatKey = function (code) { const i = $('chat-in'); if (code === 'Enter') { const v = i.value.trim(); i.value = ''; i.blur(); if (v) UI.onChat && UI.onChat(v); } else { i.value = ''; i.blur(); } };
+  UI.openChat = function () { $('chat').classList.remove('hidden'); $('chat').classList.add('open'); const i = $('chat-in'); i.focus(); };
+  UI.chatKey = function (code) { const i = $('chat-in'); if (code === 'Enter') { const v = i.value.trim(); i.value = ''; i.blur(); if (v) UI.onChat && UI.onChat(v); } else { i.value = ''; i.blur(); } $('chat').classList.remove('open'); };
+  document.getElementById('chat-in').addEventListener('blur', () => setTimeout(() => $('chat').classList.remove('open'), 150));
   UI.showChat = v => $('chat').classList.toggle('hidden', !v);
 
   // 설정
